@@ -17,7 +17,7 @@
   </span></p>
   <br>
   <img src="./files/teaser_v2.png" class="teaser-gif" style="width:80%;"><br>
-  <h3 style="text-align:center"><em>DreamBooth: better, smaller, faster.</em></h3>
+  <h3 style="text-align:center"><em>HyperDreamBooth: smaller, faster, better.</em></h3>
   <p>
     Using only a <i>single</i> input image, <i>HyperDreamBooth</i> is able to personalize a text-to-image diffusion model <b>25x</b> faster than DreamBooth, by using <b>(1)</b> a HyperNetwork to generate an initial prediction of a subset of network weights that are then <b>(2)</b> refined using fast finetuning for high fidelity to subject detail. Our method both <i>conserves model integrity and style diversity</i> while closely approximating the subject's essence and details.
   </p>
@@ -46,27 +46,33 @@
 </div>
 <div class="content">
   <h2>HyperNetwork</h2>
-  <p> Explain the hypernetwork training briefly.</p>
-  <br>
-  <img class="summary-img" src="./files/train_and_ft.png" style="width:76%;"> <br>
-  <p> Explain DreamBooth Lightweight</p>
+  <p> Our approach consists of 3 core elements: Lightweight DreamBooth (LiDB), a HyperNetwork that predicts LiDB weight, and rank-relaxed fast fine-tuning.</p>
+
+  <p>
+  The core idea behind <b>Lightweight DreamBooth (LiDB)</b> is to further decompose the weight-space of a rank-1 LoRa residuals. Specifically, we do this using a random orthogonal incomplete basis within the rank-1 LoRA weight-space. We illustrate the idea in the figure below. The approach can also be understood as further decomposing the Down (A) and Up (B) matrices of LoRA into two matrices each, where the "Aux" layers are randomly initialized with row-wise orthogonal vectors and are frozen. Surprisingly, we find that with a=100 and b=50, we obtain models that have only 30K trainable variables and are 120 KB in size, with personalization results that are strong and maintain subject fidelity, editability and style diversity.
+  </p>
   <br>
   <img class="summary-img" src="./files/lightweight_dreambooth.png" style="width:60%;"> <br>
-  <p> Explain the hypernetwork architecture briefly</p>
+  <br>
+  <p>
+  <b>HyperDreamBooth Training and Fast Fine-Tuning.</b> Phase-1: Training a hypernetwork to predict network weights from a face image, such that a text-to-image diffusion network outputs the person's face from the sentence <it>"a [v] face"</it> if the predicted weights are applied to it. We use pre-computed personalized weights for supervision, using an L2 loss, as well as the vanilla diffusion reconstruction loss. Phase-2: Given a face image, our hypernetwork predicts an initial guess for the network weights, which are then fine-tuned using the reconstruction loss to enhance fidelity.  
+  </p>
+  <img class="summary-img" src="./files/train_and_ft.png" style="width:76%;"> <br>
+  <p> <b>HyperNetwork Architecture:</b> Our hypernetwork consists of a Visual Transformer (ViT) encoder that translates face images into latent face features that are then concatenated to latent layer weight features that are initiated by zeros. A Transformer Decoder receives the sequence of the concatenated features and predicts the values of the weight features in an iterative manner by refining the initial weights with delta predictions. The final layer weight deltas that will be added to the diffusion network are obtained by passing the decoder outputs through learnable linear layers. The transformer decoder is a strong fit for this type of weight prediction task, since the output of a diffusion UNet or Text Encoder is sequentially dependent on the weights of the layers, thus in order to personalize a model there is interdependence of the weights from different layers. In previous work, this dependency is not rigorously modeled in the HyperNetwork, whereas with a transformer decoder with a positional embedding, this positional dependency is modeled - similar to dependencies between words in a language model transformer.</p>
   <br>
   <img class="summary-img" src="./files/HeprNetwork_scheme.png" style="width:100%;"> <br>
-  <p>Explain hypernetwork double step prediction here. </p>
+  <p>HyperNetwork + Fast Finetuning achieves strong results. Below we show, for each reference (row), outputs from the initial hypernetwork prediction (HyperNetwork Prediction column), as well as results after HyperNetwork prediction and fast finetuning (HyperNetwork + Fast Finetuning). We also show generated results without the HyperNetwork prediction component, demonstrating its importance.</p>
   <img class="summary-img" src="./files/intermediate_hypernet.png" style="width:100%;"> <br>
 
 </div>
 <div class="content">
   <h2>Results</h2>
-  <p>Explain results here. </p>
+  <p><b>Results Gallery:</b> Our method can generate novel artistic and stylized results of diverse subjects (depicted in an input image, left) with considerable editability while maintaining the integrity to the subject's key facial characteristics. The output images were generated with the following captions (top-left to bottom-right): <i>"An Instagram selfie of a [V] face"</i>, <i>"A Pixar character of a [V] face"</i>, <i>"A [V] face with bark skin"</i>, <i>A [V] face as a rock star</i>}. Rightmost: <i>A professional shot of a [V] face"</i>.</p>
 <img class="summary-img" src="./files/results_gallery.png" style="width:80%;">
 </div>
 <div class="content">
   <h2>Comparisons</h2>
-  <p>Comparisons to DreamBooth and Textual Inversion.</p>
+  <p>We compare random generated samples for our method (HyperDreamBooth), DreamBooth and Textual Inversion for two different identities and five different stylistic prompts. We observe that our method generally achieves very strong editability while preserving identity, generally surpassing competing methods in the single-reference regime. For quantitative comparisons, including a user study please refer to the paper.</p>
   <br>
   <img class="summary-img" src="./files/comparison.png" style="width:100%;"> <br>
 </div>
@@ -91,10 +97,10 @@
   } </code> 
 </div> -->
 <div class="content" id="acknowledgements">
-  <p><strong>Acknowledgements</strong>:
+  <!-- <p><strong>Acknowledgements</strong>:
     We thank .
     <!-- Recycling a familiar <a href="https://chail.github.io/latent-composition/">template</a> ;). --> 
-  </p>
+  </p> -->
 </div>
 </body>
 </html>
